@@ -1,0 +1,219 @@
+---
+title: "AEC699, Assignment 1"
+output: html_document
+---
+
+---
+title: "Showing off some ggplot2 skills"
+author: 
+  name: AHSAN SENAN
+  affiliation: Oregon State University
+date: "10 April 2026" # Can also use: # </br>`r format(Sys.time(), '%d %B %Y')`
+output: 
+  html_document:
+    theme: flatly
+    highlight: haddock 
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+    keep_md: true
+---
+
+```{r setup, include=FALSE}
+# These next lines set the default behavior for all R chunks in the .Rmd document.
+# I recommend you take a look here: https://rmarkdown.rstudio.com/authoring_rcodechunks.html
+# Before you begin, install the package `knitr` in your console! Run install.packages("knitr")
+knitr::opts_chunk$set(echo = TRUE)  # Show all R output
+knitr::opts_chunk$set(cache=TRUE)  # Cache the results to increase performance.
+```
+
+## Goal and requirements
+
+The goal of this assignment is simple: Produce *four* different figures using **ggplot2**. They do not have to identify causal relationships. Rather, the goal is to stretch your visualization legs and demonstrate any new (or existing) **ggplot2** skills that you have acquired since our first lecture.
+
+Some additional points:
+
+-   You are free to use any dataset that comes built in with base R, or bundled together with an external R package. See [here](https://vincentarelbundock.github.io/Rdatasets/datasets.html) for a large list.
+
+-   That being said, I would especially encourage you to use your own data.
+
+-   We have not gotten to data importation yet, but take a look [here](https://support.rstudio.com/hc/en-us/articles/218611977-Importing-Data-with-RStudio) if you need help. I would recommend that you install the **readr** and/or **readxl** packages and use a command like `my_data <- read_csv("my_data.csv")` or `my_data <- read_excel("my_data.xlsx")`.
+
+-   You can use the same dataset for all four of your plots. Or you can use a new dataset for each plot. Regardless of what you choose, I want you to try to use different geoms for each figure. There is a great list of geoms on the **ggplot2** cheatsheet [here](https://rstudio.github.io/cheatsheets/html/data-visualization.html) (check out the PDF!).
+
+-   Any other **ggplot2** skills and add-ons like faceting, changing aesthetic scales or legends, using different themes (e.g. from the **ggthemes** package), animation, etc. are all welcome and encouraged.
+
+-   I want to *see* the code that produces the figures. (Do not use `echo=FALSE` in any of the code chunks, if that means anything to you.)
+
+-   To submit this assignment, create a repo on your GitHub account so that I can clone it. Organize your data into a `data/` folder and your code into a `scripts/` or `code/` folder.
+
+### What you will be graded on
+
+-   Are your figures clear? (E.g. lack of chart chunk, non-overlapping labels.)
+-   Are your figures compelling? (E.g. use an appropriate geom for the insight that you want to convey.)
+-   Variation. (Do not create four line charts of the same dataset. Be creative).
+-   Did you read and follow the instructions of this assignment? (E.g. describe your data and figures, show the code that produced the figures, include data in the `/data` folder, etc.)
+-   Etc.
+
+Lastly, do not forget to knit the assignment (click the "Knit" button, or press `Ctrl+Shift+K`) before submitting.
+
+## Start the assignment
+
+Here is an R code chunk for you to load your packages. Feel free to load as many other packages and insert as many additional code chunks (`Ctr+Alt+I`) as you need. You can always load additional packages in the their own chunk blocks, but I recommend loading all of your packages together at the top.)
+
+```{r libs}
+if (!require("pacman")) install.packages("pacman")
+# Note: The `p_load()` function from the pacman package is a convenient way to 
+# install (if necessary) and load packages all at once. You can think of this
+# as an alternative to the normal `library(ggplot2); library(here);...` way of
+# loading R packages.
+pacman::p_load(ggplot2,haven,dplyr,tidyr,here)
+```
+
+### Figure 1: Working Age Population, India (1961-2011)
+
+```{r data1}
+# library(readr)
+# my_data <- read_csv(here("../data/my_data.csv"))
+
+data <- read_dta("C:/Users/ahsan/OneDrive/Desktop/OSU/Liu et al 2023 (replication package)/Me/Data1.dta")
+
+```
+
+This is the dataset from my latest research. It contains data from six Indian national census (1961-2011) on work breakdowns for different Indian Districts. It is a stacked gendered panel, with 2 rows for each District-Year, for the two genders. The dataset also contain temperature data from NOAA.
+
+```{r fig1}
+
+plot_data1 <- data %>%
+  group_by(year) %>%
+  summarise(
+    Male   = mean(M_WF, na.rm = TRUE),
+    Female = mean(F_WF, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  pivot_longer(
+    cols = c(Male, Female),
+    names_to = "sex",
+    values_to = "WAP"
+  )
+
+ggplot(plot_data1, aes(x = year, y = WAP, color = sex)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 2) +
+  labs(
+    title = "Working Age Population, India (1961-2011)",
+    x = "Year",
+    y = "Average WAP",
+    color = "Sex"
+  ) +
+  theme_minimal()
+
+```
+
+India's working age population for male and female appears to co-move, as expected. 1961 shows a higher working age population for women, but not by a large amount.
+
+### Figure 2: Main Workers
+
+```{r fig2}
+
+plot_data2 <- data %>%
+  group_by(year) %>%
+  summarise(
+    Male   = mean(main_work_m, na.rm = TRUE),
+    Female = mean(main_work_f, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  pivot_longer(
+    cols = c(Male, Female),
+    names_to = "sex",
+    values_to = "Main_Work"
+  )
+
+ggplot(plot_data2, aes(x = factor(year), y = Main_Work, fill = sex)) +
+  geom_col(position = "dodge", width = 0.7) +
+  labs(
+    title = "Main Workers, India (1961–2011)",
+    subtitle = "Male and female averages by census year",
+    x = "Year",
+    y = "Average Main Work",
+    fill = "Sex"
+  ) +
+  theme_light() +
+  theme(
+    plot.title = element_text(face = "bold")
+  )
+
+```
+
+As expected of most developing countries, number of workers have historically leaned heavily towards men. What is interesting for India is that women's rate has moved very little over time, and has virtually stagnated since the 1990s.
+
+### Figure 3: Same-District Migration
+
+```{r fig3}
+
+plot_data3 <- data %>%
+  group_by(year) %>%
+  summarise(
+    Male   = mean(mig_samedt_mr, na.rm = TRUE),
+    Female = mean(mig_samedt_fr, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+ggplot(plot_data3, aes(y = factor(year))) +
+  geom_segment(
+    aes(x = Male, xend = Female, yend = factor(year)),
+    linewidth = 1,
+    color = "black"
+  ) +
+  geom_point(aes(x = Male), size = 3, color = "blue") +
+  geom_point(aes(x = Female), size = 3, color = "red") +
+  labs(
+    title = "Same-District Migration, India (1961–2011)",
+    subtitle = "Male-female comparison by census year",
+    x = "Migration",
+    y = "Year"
+  ) +
+  theme_bw() +
+  theme(
+    plot.title = element_text(face = "bold")
+  )
+
+
+```
+
+An interesting aspect of India's migration is that more than 80% migration is female migration and most of that is migration related to marriages. These relocation decisions have nothing to do with work opportunities, education, economics, or the climate. Therefore, unless specifically interested in marriage decisions, focusing only on migration may be a good idea.
+
+### Figure 4: Migration and Warming
+
+```{r fig4}
+
+plot_data4 <- data %>%
+  select(LA0_9t_kr, mig_samedt_mr, region_id) %>%
+  filter(LA0_9t_kr >= 20, LA0_9t_kr <= 30)
+
+ggplot(plot_data4, aes(x = LA0_9t_kr, y = mig_samedt_mr, color = factor(region_id))) +
+  geom_point(alpha = 0.55, size = 2) +
+  geom_smooth(
+    aes(group = 1),
+    method = "lm",
+    formula = y ~ poly(x, 2),
+    se = FALSE,
+    color = "black",
+    linewidth = 1.0
+  ) +
+  labs(
+    title = "Male Migration and Temperature, by Region",
+    subtitle = "Quadratic fit for the full sample, points colored by region",
+    x = "Temperature (20–30 C)",
+    y = "Male migration",
+    color = "Region"
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "right"
+  )
+
+```
+
+Districts with higher temperature also seems to have higher in-migration. This could mean that workers are moving into warmer Districts, which would contradict the theory that warming lowers agricultural productivity and should see more out-migration. However, since this in in-migration from the same District (local), another interpretation can be that falling farm productivity (caused by warming) leads to higher migration in the region.
