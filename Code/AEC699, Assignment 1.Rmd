@@ -76,7 +76,9 @@ pacman::p_load(ggplot2,haven,dplyr,tidyr,here)
 # library(readr)
 # my_data <- read_csv(here("../data/my_data.csv"))
 
-data <- read_dta("Data/Data1.dta")
+url <- "https://raw.githubusercontent.com/ahsansenan/AEC699/main/Data/Data1.dta"
+data <- read_dta(url)
+
 
 ```
 
